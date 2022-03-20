@@ -1,0 +1,6 @@
+The most important nodes_1=20409
+The most important nodes_2=26200
+The most important nodes_3=20409
+The most important nodes_4=18990
+The most important nodes_5=20409
+The most important nodes_6=20409
