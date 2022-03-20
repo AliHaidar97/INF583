@@ -4,12 +4,12 @@ import java.io.FileNotFoundException;
 
 public class PartB_1_Threads {
 
-	public static int getMostImportantElementUsingMatrixMutliplicationUsingThreads(int iteration,int numberOfElements)
+	public static int getMostImportantElementUsingMatrixMutliplicationUsingThreads(int iteration, int numberOfElements)
 			throws FileNotFoundException, CloneNotSupportedException {
 
 		SharedVector r = new SharedVector(numberOfElements);
 		SharedVector newR = new SharedVector(numberOfElements);
-		
+
 		final int nofThreads = 4;
 		String[] files = new String[nofThreads];
 		Thread[] threads = new Thread[4];
@@ -29,10 +29,22 @@ public class PartB_1_Threads {
 				}
 			}
 			newR.normalize();
-			r = (SharedVector) newR.clone();
-
+			for (int i = 0; i < numberOfElements; i++)
+				r.set(i, newR.get(i));
 		}
-		
-		return v;
+		int is = 0;
+		for (int i = 0; i < numberOfElements; i++) {
+			if (r.get(is) < r.get(i)) {
+				is = i;
+			}
+		}
+		return is;
 	}
+
+	public static void main(String args[]) throws FileNotFoundException, CloneNotSupportedException {
+		int it = 6;
+		System.out.println("The most important nodes_" + it + "="
+				+ getMostImportantElementUsingMatrixMutliplicationUsingThreads(it, 64375));
+	}
+
 }

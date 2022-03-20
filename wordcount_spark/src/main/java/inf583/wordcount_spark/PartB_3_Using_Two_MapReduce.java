@@ -15,11 +15,7 @@ import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.*;
 import org.apache.spark.api.java.function.*;
 
-import inf583.wordcount_spark.WordCount.MatrixMapper2_2;
-import inf583.wordcount_spark.WordCount.MatrixMapperMatrix2_1;
-import inf583.wordcount_spark.WordCount.MatrixMapperVector2_1;
-import inf583.wordcount_spark.WordCount.MatrixReducer2_1;
-import inf583.wordcount_spark.WordCount.MatrixReducer2_2;
+
 import scala.Tuple2;
 
 import org.apache.hadoop.conf.Configuration;
@@ -46,7 +42,7 @@ import org.apache.hadoop.mapreduce.lib.input.MultipleInputs;
 import org.apache.hadoop.mapreduce.lib.join.TupleWritable;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 
-public class PartB_3_Using_Two_MapReduce {
+public class PartB_3_Using_Two_MapReduce{
 
 	public static class MatrixMapperVector2_1 extends Mapper<Object, Text, Text, Text>
 
@@ -229,7 +225,7 @@ public class PartB_3_Using_Two_MapReduce {
 		conf.set("p", "1");
 
 		Job job1 = Job.getInstance(conf, "MatrixMultiplication");
-		job1.setJarByClass(WordCount.class);
+		job1.setJarByClass(PartB_3_Using_Two_MapReduce.class);
 		job1.setReducerClass(MatrixReducer2_1.class);
 		job1.setOutputKeyClass(Text.class);
 		job1.setOutputValueClass(Text.class);
@@ -251,7 +247,7 @@ public class PartB_3_Using_Two_MapReduce {
 		conf = new Configuration();
 
 		job1 = Job.getInstance(conf, "MatrixMultiplication-part2");
-		job1.setJarByClass(WordCount.class);
+		job1.setJarByClass(PartB_3_Using_Two_MapReduce.class);
 		job1.setMapperClass(MatrixMapper2_2.class);
 		job1.setCombinerClass(MatrixReducer2_2.class);
 		job1.setReducerClass(MatrixReducer2_2.class);
@@ -264,6 +260,11 @@ public class PartB_3_Using_Two_MapReduce {
 		FileOutputFormat.setOutputPath(job1, new Path(outputFolder));
 		job1.waitForCompletion(true);
 
+	}
+	
+	public static void main(String args[]) throws ClassNotFoundException, IOException, InterruptedException {
+		matrixMultiplicationUsingTwoMapReduce("input","inputR","Output");
+		System.out.println("You can find the output in the Output File");
 	}
 
 }

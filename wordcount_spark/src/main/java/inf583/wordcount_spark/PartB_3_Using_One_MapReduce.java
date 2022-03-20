@@ -10,15 +10,9 @@ import org.apache.hadoop.io.Text;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.Reducer.Context;
 import org.apache.hadoop.mapreduce.lib.input.MultipleInputs;
 import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-
-import inf583.wordcount_spark.WordCount.MatrixMapperMatrix;
-import inf583.wordcount_spark.WordCount.MatrixMapperVector;
-import inf583.wordcount_spark.WordCount.MatrixReducer;
-
 public class PartB_3_Using_One_MapReduce {
 	public static class MatrixMapperVector extends Mapper<Object, Text, Text, Text>
 
@@ -54,7 +48,7 @@ public class PartB_3_Using_One_MapReduce {
 
 			}
 
-			System.out.println(indicesAndValue[0] + " Done");
+
 
 		}
 
@@ -179,7 +173,7 @@ public class PartB_3_Using_One_MapReduce {
 		conf.set("p", "1");
 
 		Job job1 = Job.getInstance(conf, "MatrixMultiplication");
-		job1.setJarByClass(WordCount.class);
+		job1.setJarByClass(PartB_3_Using_One_MapReduce.class);
 		job1.setReducerClass(MatrixReducer.class);
 		job1.setOutputKeyClass(Text.class);
 		job1.setOutputValueClass(Text.class);
@@ -198,5 +192,9 @@ public class PartB_3_Using_One_MapReduce {
 		TextOutputFormat.setOutputPath(job1, new Path(outputFolder));
 		job1.waitForCompletion(true);
 	}
+public static void main(String args[]) throws ClassNotFoundException, IOException, InterruptedException {
+	matrixMultiplicationUsingOneMapReduce("input","inputR","Output");
+	System.out.println("You can find the output in the Output File");
 
+}
 }

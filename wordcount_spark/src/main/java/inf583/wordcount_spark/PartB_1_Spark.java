@@ -12,18 +12,16 @@ import java.util.*;
 import org.apache.spark.util.*;
 
 public class PartB_1_Spark {
-	
 
 	static int getMostImportantPageUsingSparkUsingArray(String inputFile, String outputFolder, int numberOfIteration) {
 
 		// Create a Java Spark Context
 		SparkConf conf = new SparkConf().setMaster("local[*]").setAppName("wordCount");
 		JavaSparkContext sc = new JavaSparkContext(conf);
-		
+
 		// Load our input data.
 		JavaRDD<String> input = sc.textFile(inputFile);
-		CollectionAccumulator<Double>arr = sc.sc().collectionAccumulator();
-		
+
 		int numberOfNodes = (input.mapToPair(a -> {
 			return new Tuple2<>(1, Integer.parseInt(a.split(" ")[0]));
 		})).reduceByKey((a, b) -> Math.max(a, b)).collect().get(0)._2 + 1;
@@ -42,42 +40,39 @@ public class PartB_1_Spark {
 			return new Tuple2<>(Integer.parseInt(edge[0]), new Tuple2<>(Integer.parseInt(edge[1]), 1.0));
 		});
 
-		List<Double> temp = new ArrayList<Double>(numberOfNodes);
+		double[] arr = new double[numberOfNodes];
 
 		for (int i = 0; i < numberOfNodes; i++) {
-			temp.set(i, 1.0 / numberOfNodes);
+			arr[i] = 1.0 / numberOfNodes;
+
 		}
-		arr.setValue(temp);
 
 		JavaPairRDD<Integer, Double> r;
 
 		for (int i = 0; i < numberOfIteration; i++) {
-
-			r = (graph.mapValues(a -> (new Tuple2<>(a._1, arr.value().get(a._1))))
-					.reduceByKey((a, b) -> new Tuple2<>(a._1, (a._2 + b._2))).mapValues(a -> new Double(a._2)));
+			
+			r = (graph.mapValues(a -> (new Tuple2<>(a._1, arr[a._1])))
+					.reduceByKey((a, b) -> new Tuple2<>(a._1, (a._2 + b._2)))).mapValues(a -> new Double(a._2));
 
 			double norm = 0;
 			norm = r.mapToPair(a -> {
 				return new Tuple2<>(1, a._2 * a._2);
 			}).reduceByKey((a, b) -> a + b).lookup(1).get(0);
-			
 
 			for (int j = 0; j < numberOfNodes; j++) {
-				temp.set(i, 0.0);
+				arr[j] = 0;
 			}
-			arr.setValue(temp);
-			
+
 			for (Tuple2<Integer, Double> val : r.collect()) {
 
-				temp.set(val._1, val._2 / norm);
+				arr[val._1] = val._2 / norm;
 
 			}
-			arr.setValue(temp);
 
 		}
 		int bestNode = 0;
 		for (int i = 0; i < numberOfNodes; i++) {
-			if (arr.value().get(bestNode) < arr.value().get(i)) {
+			if (arr[bestNode] < arr[i]) {
 				bestNode = i;
 			}
 		}
@@ -154,9 +149,17 @@ public class PartB_1_Spark {
 			}
 			return b;
 		}).collect().get(0)._2;
-
+		sc.stop();
 		return Integer.parseInt(bestNode.split(" ")[0]);
 
 	}
 	
+	public static void main(String args[]) {
+		
+		int it=6;
+		int is = getMostImportantPageUsingSparkUsingArray("input","output",it);
+		System.out.println("The most important page_"+it+" : " + is);
+		
+	}
+
 }

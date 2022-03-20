@@ -18,13 +18,14 @@ import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
 
 public class PartB_1_Hadoop {
 
-	static int getMostImportantPageUsingHadoop(String inputFile, String inputRFile, String output,
+	static void getMostImportantPageUsingHadoop(String inputFile, String inputRFile, String output,
 			int numberOfIteration) throws IOException, ClassNotFoundException, InterruptedException {
-
+		Configuration conf = new Configuration();
+		Job job1 = Job.getInstance(conf, "part-B2");
 		for (int i = 0; i < numberOfIteration; i++) {
-			Configuration conf = new Configuration();
-			Job job1 = Job.getInstance(conf, "part-B2");
-			job1.setJarByClass(WordCount.class);
+			conf = new Configuration();
+			job1 = Job.getInstance(conf, "part-B2");
+			job1.setJarByClass(PartB_1_Hadoop.class);
 			job1.setReducerClass(ReducerExerciseWithoutArrayB2_1.class);
 			job1.setOutputKeyClass(Text.class);
 			job1.setOutputValueClass(Text.class);
@@ -47,8 +48,11 @@ public class PartB_1_Hadoop {
 
 			TextOutputFormat.setOutputPath(job1, new Path("outputIntermediate"));
 			job1.waitForCompletion(true);
+			
+			
+			
 			job1 = Job.getInstance(conf, "part-B2");
-			job1.setJarByClass(WordCount.class);
+			job1.setJarByClass(PartB_1_Hadoop.class);
 			job1.setMapperClass(MapperExerciceWithoutArrayB2_2.class);
 			job1.setReducerClass(ReducerExerciseWithoutArrayB2_2.class);
 			job1.setOutputKeyClass(Text.class);
@@ -65,8 +69,24 @@ public class PartB_1_Hadoop {
 			normalizeVectorUsingHadoop(output);
 
 		}
+		
+		job1 = Job.getInstance(conf, "part-B2");
+		job1.setJarByClass(PartB_1_Hadoop.class);
+		job1.setMapperClass(MapperToGetThemostImportantNode.class);
+		job1.setReducerClass(ReducerToGetThemostImportantNode.class);
+		job1.setOutputKeyClass(Text.class);
+		job1.setOutputValueClass(Text.class);
+		job1.setInputFormatClass(TextInputFormat.class);
+		job1.setOutputFormatClass(TextOutputFormat.class);
 
-		return 0;
+		TextInputFormat.addInputPath(job1, new Path("output"));
+		FileSystem fs = FileSystem.get(conf);
+		if (fs.exists(new Path("output_r")))
+			fs.delete(new Path("output_r"), true);
+		TextOutputFormat.setOutputPath(job1, new Path("output_r"));
+		job1.waitForCompletion(true);
+
+		
 
 	}
 
@@ -145,6 +165,10 @@ public class PartB_1_Hadoop {
 
 		}
 	}
+	
+	
+	
+	
 
 	public static class ReducerExerciseWithoutArrayB2_2 extends Reducer<Text, Text, Text, Text> {
 
@@ -176,17 +200,16 @@ public class PartB_1_Hadoop {
 		{
 
 			Configuration conf = context.getConfiguration();
-
+			
 			float val = Float.parseFloat(value.toString().split("\t")[1]);
 			val = val * val;
 			context.write(new Text("1"), new Text(Float.toString(val)));
-			float currentNorm = conf.getFloat("Norm", (float) 0.0);
-			currentNorm += val;
-			conf.setFloat("Norm", currentNorm);
+			
 
 		}
 	}
 
+	static float resultNorm = (float) 0.0;
 	public static class CalculateNormReducer extends Reducer<Text, Text, Text, Text>
 
 	{
@@ -194,19 +217,19 @@ public class PartB_1_Hadoop {
 		public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException
 
 		{
-
+			Configuration conf = context.getConfiguration();
 			String value;
-			float result = (float) 0.0;
+			resultNorm=0;
 			for (Text val : values)
 
 			{
-
+				
 				value = val.toString();
-				result += Float.parseFloat(value);
-
+				resultNorm += Float.parseFloat(value);
 			}
-
-			context.write(key, new Text(Float.toString(result)));
+			
+			
+			context.write(key, new Text(Float.toString(resultNorm)));
 
 		}
 
@@ -234,8 +257,8 @@ public class PartB_1_Hadoop {
 		{
 			Configuration conf = context.getConfiguration();
 
-			float Norm = (float) Math.sqrt(conf.getFloat("Norm", 1));
-
+			float Norm =(float) Math.sqrt(resultNorm);
+			
 			float v = (float) 0.0;
 			for (Text val : values)
 
@@ -245,7 +268,9 @@ public class PartB_1_Hadoop {
 				v += Float.parseFloat(value);
 
 			}
+		
 			v /= Norm;
+			
 			context.write(key, new Text(Float.toString(v)));
 
 		}
@@ -254,15 +279,15 @@ public class PartB_1_Hadoop {
 
 	static void normalizeVectorUsingHadoop(String inputR)
 			throws IOException, ClassNotFoundException, InterruptedException {
-
+		
 		Configuration conf = new Configuration();
 
-		conf.setFloat("Norm", (float) 0.0);
+		
 
 		Job job1 = Job.getInstance(conf, "NormCalculation");
-		job1.setJarByClass(WordCount.class);
+		job1.setJarByClass(PartB_1_Hadoop.class);
 		job1.setMapperClass(CalculateNormMapper.class);
-		job1.setCombinerClass(CalculateNormReducer.class);
+	
 		job1.setReducerClass(CalculateNormReducer.class);
 		job1.setOutputKeyClass(Text.class);
 		job1.setOutputValueClass(Text.class);
@@ -272,9 +297,12 @@ public class PartB_1_Hadoop {
 			fs.delete(new Path("Norm"), true);
 		FileOutputFormat.setOutputPath(job1, new Path("Norm"));
 		job1.waitForCompletion(true);
-
+		
+		
+		conf = new Configuration();
+		
 		job1 = Job.getInstance(conf, "NormalizeVector");
-		job1.setJarByClass(WordCount.class);
+		job1.setJarByClass(PartB_1_Hadoop.class);
 		job1.setMapperClass(NormalizeMapper.class);
 		job1.setReducerClass(NormalizeReducer.class);
 		job1.setOutputKeyClass(Text.class);
@@ -291,6 +319,59 @@ public class PartB_1_Hadoop {
 
 		fs.rename(new Path("Norm"), new Path(inputR));
 
+	}
+	
+	
+	public static class MapperToGetThemostImportantNode extends Mapper<Object, Text, Text, Text> {
+
+		private static Text firstNode = new Text();
+		private static Text secondNode = new Text();
+
+		public void map(Object key, Text value, Context context) throws IOException, InterruptedException {
+
+			String[] list = value.toString().split("\t");
+
+			firstNode.set("1");
+			secondNode.set(list[0]+"#"+list[1]);
+			context.write(firstNode, secondNode);
+
+		}
+	}
+	
+	public static class ReducerToGetThemostImportantNode extends Reducer<Text, Text, Text, Text> {
+
+		private static Text firstNode = new Text();
+		private static Text secondNode = new Text();
+
+		public void reduce(Text key, Iterable<Text> values, Context context) throws IOException, InterruptedException {
+
+			int is = 0;
+			double maxIs=0;
+			for (Text val : values) {
+				int index = Integer.parseInt(val.toString().split("#")[0]);
+				double tempVal= Double.parseDouble(val.toString().split("#")[1]);
+				if(maxIs< tempVal) {
+					maxIs=tempVal;
+					is=index;
+				}
+			}
+
+			secondNode.set(Double.toString(maxIs));
+			firstNode.set(Integer.toString(is));
+
+			context.write(firstNode, secondNode);
+
+		}
+
+	}
+	
+	
+public static void main(String args[]) throws ClassNotFoundException, IOException, InterruptedException {
+		
+		int it=5;
+		getMostImportantPageUsingHadoop("input","inputR","output",it);
+		System.out.println("The most important page_"+it+" : check output_r");
+		
 	}
 
 }

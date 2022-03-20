@@ -15,10 +15,10 @@ public class SharedVector {
         
     }
     public  SharedVector(int n) {
-        r = new ArrayList<Double>(n);
+        r = new ArrayList<Double>();
         lock = new ReentrantLock();
         for(int i=0;i<n;i++) {
-        	r.set(i, 1.0/n);
+        	r.add(1.0/n);
         }
     }
 
